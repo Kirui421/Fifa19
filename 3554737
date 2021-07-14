@@ -1,0 +1,414 @@
+#CHECK THE DATA
+
+dim(data)
+names(data)
+str(data)
+attributes(data)
+
+#check missing data NA,summary,table,unique
+library(DataExplorer)
+summary(data)
+
+introduce(data)
+plot_intro(data)
+plot_missing(data)
+
+#check head & tail
+first_10=head(data,10)
+last_10=tail(data,10)
+View(first_10)
+View(last_10)
+
+
+#DATA MANIPULATION
+
+#Create the League Variable/Column
+bundesliga=c(
+  "1. FC Nürnberg", "1. FSV Mainz 05", "Bayer 04 Leverkusen", "FC Bayern München",
+  "Borussia Dortmund", "Borussia Mönchengladbach", "Eintracht Frankfurt",
+  "FC Augsburg", "FC Schalke 04", "Fortuna Düsseldorf", "Hannover 96",
+  "Hertha BSC", "RB Leipzig", "SC Freiburg", "TSG 1899 Hoffenheim",
+  "VfB Stuttgart", "VfL Wolfsburg", "SV Werder Bremen"
+)
+premierLeague=c(
+  "Arsenal", "Bournemouth", "Brighton & Hove Albion", "Burnley",
+  "Cardiff City", "Chelsea", "Crystal Palace", "Everton", "Fulham",
+  "Huddersfield Town", "Leicester City", "Liverpool", "Manchester City",
+  "Manchester United", "Newcastle United", "Southampton", 
+  "Tottenham Hotspur", "Watford", "West Ham United", "Wolverhampton Wanderers"
+)
+laliga=c(
+  "Athletic Club de Bilbao", "Atlético Madrid", "CD Leganés",
+  "Deportivo Alavés", "FC Barcelona", "Getafe CF", "Girona FC", 
+  "Levante UD", "Rayo Vallecano", "RC Celta", "RCD Espanyol", 
+  "Real Betis", "Real Madrid", "Real Sociedad", "Real Valladolid CF",
+  "SD Eibar", "SD Huesca", "Sevilla FC", "Valencia CF", "Villarreal CF"
+)
+seriea=c(
+  "Atalanta","Bologna","Cagliari","Chievo Verona","Empoli", "Fiorentina","Frosinone","Genoa",
+  "Inter","Juventus","Lazio","Milan","Napoli","Parma","Roma","Sampdoria","Sassuolo","SPAL",
+  "Torino","Udinese"
+)
+superlig=c(
+  "Akhisar Belediyespor","Alanyaspor", "Antalyaspor","Medipol Basaksehir FK","BB Erzurumspor","Besiktas JK",
+  "Bursaspor","Çaykur Rizespor","Fenerbahçe SK", "Galatasaray SK","Göztepe SK","Kasimpasa SK",
+  "Kayserispor","Atiker Konyaspor","MKE Ankaragücü", "Sivasspor","Trabzonspor","Yeni Malatyaspor"
+)
+ligue1=c(
+  "Amiens SC", "Angers SCO", "AS Monaco", "AS Saint-Étienne", "Dijon FCO", "En Avant de Guingamp",
+  "FC Nantes", "FC Girondins de Bordeaux", "LOSC Lille", "Montpellier HSC", "Nîmes Olympique", 
+  "OGC Nice", "Olympique Lyonnais","Olympique de Marseille", "Paris Saint-Germain", 
+  "RC Strasbourg Alsace", "Stade Malherbe Caen", "Stade de Reims", "Stade Rennais FC", "Toulouse Football Club"
+)
+eredivise=c(
+  "ADO Den Haag","Ajax", "AZ Alkmaar", "De Graafschap","Excelsior","FC Emmen","FC Groningen",
+  "FC Utrecht", "Feyenoord","Fortuna Sittard", "Heracles Almelo","NAC Breda",
+  "PEC Zwolle", "PSV","SC Heerenveen","Vitesse","VVV-Venlo","Willem II"
+)
+liganos=c(
+  "Os Belenenses", "Boavista FC", "CD Feirense", "CD Tondela", "CD Aves", "FC Porto",
+  "CD Nacional", "GD Chaves", "Clube Sport Marítimo", "Moreirense FC", "Portimonense SC", "Rio Ave FC",
+  "Santa Clara", "SC Braga", "SL Benfica", "Sporting CP", "Vitória Guimarães", "Vitória de Setúbal"
+)
+
+library(dplyr)
+data_league=mutate(data,
+                   League=case_when(
+                     Club%in%bundesliga~"Bundesliga",
+                     Club%in%premierLeague~"Premier League",
+                     Club%in%laliga~"La Liga",
+                     Club%in%seriea~"Serie A",
+                     Club%in%superlig~"Super Lig",
+                     Club%in%ligue1~"Ligue 1",
+                     Club%in%eredivise~"Eredivise",
+                     Club%in%liganos~"Liga Nos"
+                   ),
+                   Country=case_when(
+                     League=="Bundesliga"~"Germany",
+                     League=="Premier League"~"UK",
+                     League=="La Liga"~"Spain",
+                     League=="Serie A"~"Italy",
+                     League=="Super Lig"~"Turkey",
+                     League=="Ligue 1"~"France",
+                     League=="Eredivise"~"Netherlands",
+                     League=="Liga Nos"~"Portugal"
+                   )
+                   ) %>% filter(!is.na(League)) %>% mutate_if(is.factor,as.character)
+data_league$League
+data_league$Country
+
+
+#create Position Class
+unique(data_league$Position)
+table(data_league$Position)
+
+
+goalkeeper=c("GK")
+defence=c("RCB","LCB","LB","CB","RB","RWB","LWB")
+midfielder=c("RCM","LCM","LDM", "CDM","RM","CAM","LM","RDM","CM","RAM", "LAM")
+forward=c( "RF", "ST","LW", "LF","RS","LS","RW","CF")
+
+data_league=data_league %>% 
+  mutate(Class=case_when(
+    Position%in%goalkeeper~"Goal Keeper",
+    Position%in%defence~"Defender",
+    Position%in%midfielder~"Midfielder",
+    Position%in%forward~"Forward"
+  )) %>% filter(!is.na(Class)) %>% mutate_if(is.factor,as.character)
+
+#correct preferred foot to factor from character
+data_league$Preferred.Foot=as.factor(as.character(data_league$Preferred.Foot))
+class(data_league$Preferred.Foot)
+
+#correct joined date from character to POSIXct(date)
+library(lubridate)
+
+data_league$Joined=as.POSIXct(data_league$Joined)
+data_league$Joined
+class(data_league$Joined)
+
+#rename some variables
+data_league %>% 
+  rename(
+    "Heading.Accuracy"=HeadingAccuracy,
+    "Short.Passing"=ShortPassing,
+    "FK.Accuracy"=FKAccuracy,
+    "Long.Passing"=LongPassing,
+    "Ball.Control"=BallControl,
+    "Sprint.Speed"=SprintSpeed,
+    "Shot.Power"=ShotPower,
+    "Long.Shots"=LongShots,
+    "Standing.Tackle"=StandingTackle,
+    "Sliding.Tackle"=SlidingTackle,
+    "GK.Diving"=GKDiving,
+    "GK.Handling"=GKHandling,
+    "GK.Kicking"=GKKicking,
+    "GK.Posotioning"=GKPositioning,
+    "GK.Reflexes"=GKReflexes
+  )
+
+#remove unnecessary variables
+data_league %>% 
+  select(.,-ID,-Body.Type,-Joined,-Photo,-Flag,-Special)
+
+#DATA  ANALYSIS & VISUALIZATION
+library(ggplot2)
+
+#graph for average age of the league
+summ=data_league %>% 
+  group_by(League) %>% 
+  summarize(average_age=mean(Age))  
+
+ggplot()+geom_histogram(data_league,mapping = aes(x=Age,fill=League))+
+  theme_bw()+facet_wrap(League~.)+labs(x="Age",y="Frequency",title = "Distribution & The Average Age of The Players in each League",caption = "@EA Sports- FIFA 19")+
+  geom_vline(summ,mapping = aes(xintercept=average_age),col="red",size = 1.5)+theme(legend.position = "bottom")+geom_text(summ,mapping = aes(x=average_age+3,y=65,label=round(average_age,digits = 2)))
+
+data_league %>% 
+  group_by(League) %>% 
+  summarize(.,average_age1=mean(Age))
+
+#string manipulation 
+library(tidyverse)
+
+#player value
+head(data_league$Value)
+unique(data_league$Value)
+data_league$Value=str_remove_all(data_league$Value,"â,¬")
+
+data_league$Value=str_replace_all(data_league$Value,"K","000")
+data_league$Value=str_remove_all(data_league$Value,"M")
+
+data_league$Value=as.numeric(as.character(data_league$Value))
+class(data_league$Value)
+
+data_league %>% 
+  mutate(Value=if_else(data_league$Value<1000,Value*1000000,Value))
+
+data_league %>%
+  group_by(League) %>% 
+  summarize(Total_value=sum(Value),na.rm = TRUE) %>% 
+  ggplot(.,aes(reorder(x=League,Total_value),y=Total_value,fill=Total_value))+
+  geom_col()+theme_bw()+labs(x="League",y="Total Value")+coord_flip()
+
+#Comparison of two players(L.Messi ,Cristiano Ronaldo)
+library(tidyverse)
+#selection of the player
+players=data %>% 
+  filter(Name%in%c("L. Messi","Cristiano Ronaldo")) %>% 
+#unite Name & Club variable
+  mutate(Name=paste0(Name,",",Club)) %>% 
+#selection ability of the player
+  select(Name,Crossing:SlidingTackle) %>% 
+#tranform from variable to observation
+  gather(Skill,Exp,Crossing:SlidingTackle,-Name)
+  
+head(players)  
+view(players)
+
+players %>% 
+  ggplot(.,aes(x=Skill,y=Exp,fill=Name))+geom_bar(stat = "identity")+facet_wrap(Name~.)+coord_flip()+theme_bw()+
+  labs(x="Skills",y="Attribute Rating",title = "Players Attributes",caption = "@EA FIFA 19")+theme(legend.position = "bottom")
+
+#comparison of two players(Neymar Jr,De Gea)
+#selection of the player
+player1=data %>% 
+  filter(Name%in%c("Neymar Jr","De Gea")) %>% 
+#unite Name & Club variable
+  mutate(Name=paste0(Name,",",Club)) %>% 
+#selection ability of the player  
+  select(Name,Crossing:SlidingTackle) %>% 
+#transform from variable to observation
+  gather(Skills,Exps,Crossing:SlidingTackle,-Name)
+
+head(player1)
+View(player1)
+
+player1 %>% 
+  ggplot(.,aes(x=Skills,y=Exps,fill=Name))+geom_bar(stat = "identity")+facet_wrap(Name~.)+theme_bw()+coord_flip()+
+  labs(x="Skills",y="Players Attribute",caption = "@EA FIFA 19")+theme(legend.position = "bottom")
+
+
+
+#Best in finishing & shotpower in la liga
+kor=data_league %>% 
+  filter(League == "La Liga", Class == "Forward") %>% 
+  select(Name,Preferred.Foot,Finishing,ShotPower)
+
+kor
+
+library(ggplot2)
+ggplot(kor,aes(x=ShotPower,y=Finishing,label=Name,col=Preferred.Foot))+
+  geom_text()+geom_jitter(alpha = 0.3, size = 2.5, width = 0.3, height = 0.3)+geom_smooth(method = "lm", color = "gray40", lty = 2, se = FALSE, size = 0.6)
+#boxplot to check similarity between preferred.foot & shotpower
+ggplot(kor,aes(x=Preferred.Foot,y=ShotPower,fill=Preferred.Foot))+geom_boxplot()+theme_bw()+
+  theme(legend.position = "bottom")+labs(x="Preferred Foot",y="Shot Power",title = "Box_Plot to Check similarity Btw Preferred.Foot & Shot.Power",caption = "@EA-FIFA 19")
+    #asumption all samples are independent
+    #all samples are draw from population with equal variances
+var.test(ShotPower~Preferred.Foot,data = kor)
+    #all samples are draw from population that follow  a normal distribution
+left.foot=data_league %>% 
+  filter(Preferred.Foot=="Left",League=="La Liga",Class=="Forward") %>% 
+  select(ShotPower,Preferred.Foot)
+left.foot
+
+right.foot=data_league %>% 
+  filter(Preferred.Foot=="Right",League=="La Liga",Class=="Forward") %>% 
+  select(ShotPower,Preferred.Foot)
+right.foot
+
+shapiro.test(left.foot$ShotPower)
+shapiro.test(right.foot$ShotPower)
+
+qqnorm(left.foot$ShotPower)
+qqline(left.foot$ShotPower)
+
+qqnorm(right.foot$ShotPower)
+qqline(right.foot$ShotPower)
+#independent t-test Analysis
+t.test(ShotPower~Preferred.Foot,data = kor)
+?t.test
+#boxplot to check similarity between preferred.foot & finishing
+ggplot(kor,aes(x=Preferred.Foot,y=Finishing,fill=Preferred.Foot))+geom_boxplot()+theme_bw()+
+  theme(legend.position = "bottom")+labs(x="Preferred Foot",y="Finishing",title = "Box_Plot to Check similarity Btw Preferred.Foot & Finishing",caption = "@EA-FIFA 19")
+#independent t-test analysis
+t.test(Finishing~Preferred.Foot,mu=0,alt="two.sided",var.eq=FALSE,paired=FALSE,conf=0.95,data = kor)
+
+
+
+#Best in interception & marking in la liga
+kor1=data_league %>% 
+  filter(League=="La Liga",Class=="Defender") %>% 
+  select(Name,Preferred.Foot,Interceptions,Marking)
+kor1
+
+ggplot(kor1,aes(x=Interceptions,y=Marking,label=Name,col=Preferred.Foot))+geom_text()+
+  geom_jitter(alpha = 0.3, size = 2.5, width = 0.3, height = 0.3)+geom_smooth(method = "lm",color = "gray40", lty = 2, se = FALSE, size = 0.6)+
+  theme_bw()+theme(legend.position = "bottom")
+
+cor.test(data_league$Interceptions,data_league$Marking)
+
+
+#independent t-test(preferred.foot & interception)
+
+#the boxplot
+ggplot(kor1,aes(x=Preferred.Foot,y=Interceptions,fill=Preferred.Foot))+geom_boxplot()+
+  theme_bw()+theme(legend.position = "bottom")+labs(x="Preferred Foot",y="Interception",title = "BOXPLOT",subtitle = "Independent T-test Btw Preferred Foot & Interception",caption = "@EA-FIFA 19")
+#Assumption.1-All samples are independent
+#Assumption.2-All samples are draw from population with equal variance
+var.test(Interceptions~Preferred.Foot,data = kor1)
+#Assumption.3-All samples are drawn from population that follow a normal distribution
+left.foot_defence=data_league %>% 
+  filter(League=="La Liga",Preferred.Foot=="Left",Class=="Defender") %>% 
+  select(Interceptions,Preferred.Foot)
+left.foot_defence
+
+right.foot_defence=data_league %>% 
+  filter(League=="La Liga",Preferred.Foot=="Right",Class=="Defender") %>% 
+  select(Interceptions,Preferred.Foot)
+right.foot_defence
+
+shapiro.test(left.foot_defence$Interceptions)
+qqnorm(left.foot_defence$Interceptions)
+qqline(left.foot_defence$Interceptions)
+
+shapiro.test(right.foot_defence$Interceptions)
+qqnorm(right.foot_defence$Interceptions)
+qqline(right.foot_defence$Interceptions)
+
+t.test(Interceptions~Preferred.Foot,data = kor1)
+#Fastest forwards in la liga
+kor2=data_league %>% 
+  filter(League=="La Liga",Class=="Forward") %>% 
+  select(Name,Preferred.Foot,SprintSpeed,Acceleration)
+kor2
+
+ggplot(kor2,aes(x=SprintSpeed,y=Acceleration,label=Name,col=Preferred.Foot))+geom_text()+
+  geom_jitter(alpha = 0.3, size = 2.5, width = 0.3, height = 0.3)+geom_smooth(method = "lm",col="gray40",lty = 2, se = FALSE, size = 0.6)+
+  theme_bw()+theme(legend.position = "bottom")+labs(x="Sprint Speed",y="Acceleration",title = "Sprint vs Acceleration",caption = "@EA - FIFA 19")
+  
+cor.test(data_league$SprintSpeed,data_league$Acceleration)
+#Best finishing & shotpower in the premier league
+pl=data_league %>% 
+  filter(League=="Premier League",Class=="Forward") %>% 
+  select(Name,Preferred.Foot,Finishing,ShotPower)
+pl
+
+ggplot(pl,aes(x=ShotPower,y=Finishing,label=Name,col=Preferred.Foot))+geom_text()+
+  geom_jitter(alpha = 0.3, size = 2.5, width = 0.3, height = 0.3)+geom_smooth(method = "lm",col="gray40",lty = 2, se = FALSE, size = 0.6)+
+  theme_bw()+theme(legend.position = "bottom")+labs(x="Shot Power",y="Finishing",title = "Shot Power VS Finishing",caption = "@EA - FIFA 19")
+
+#Best defenders in the premier league
+pl1=data_league %>% 
+  filter(League=="Premier League",Class=="Defender") %>% 
+  select(Name,Preferred.Foot,Interceptions,Marking)
+pl1
+
+ggplot(pl1,aes(x=Interceptions,y=Marking,label=Name,col=Preferred.Foot))+geom_text()+
+  geom_jitter(alpha = 0.3, size = 2.5, width = 0.3, height = 0.3)+geom_smooth(method = "lm",col="gray40",lty = 2, se = FALSE, size = 0.6)+
+  theme_bw()+theme(legend.position = "bottom")+labs(x="Interception",y="Marking",title = "Interception VS Marking",caption = "@EA - FIFA19")
+
+#Fastest forwards in the premier League
+pl2=data_league %>% 
+  filter(League=="Premier League",Class=="Forward") %>% 
+  select(Name,Preferred.Foot,SprintSpeed,Acceleration)
+pl2
+
+ggplot(pl2,aes(x=SprintSpeed,y=Acceleration,label=Name,col=Preferred.Foot))+geom_text()+
+  geom_jitter(alpha = 0.3, size = 2.5, width = 0.3, height = 0.3)+geom_smooth(method = "lm",col="gray40",lty = 2, se = FALSE, size = 0.6)+
+  theme_bw()+theme(legend.position = "bottom")+labs(x="Sprint Speed",y="Acceleration",title = "Sprint Speed VS Acceleration",caption = "@EA - FIFA 19")
+
+#best finishers in the Bundesliga
+bu=data_league %>% 
+  filter(League=="Bundesliga",Class=="Forward") %>% 
+  select(Name,Preferred.Foot,Finishing,ShotPower)
+bu
+
+ggplot(bu,aes(x=ShotPower,y=Finishing,label=Name,col=Preferred.Foot))+geom_text()+
+  geom_jitter(alpha = 0.3, size = 2.5, width = 0.3, height = 0.3)+geom_smooth(method = "lm",col="gray40",lty = 2, se = FALSE, size = 0.6)+
+  theme_bw()+theme(legend.position = "bottom")+labs(x="Shot Power",y="Finishing",title = "Forward Shot_Power VS Finishing BUNDESLIGA",caption = "@EA - FIFA 19")
+  
+
+#best forward in Europe
+best=data_league %>% 
+  filter(Class=="Forward") %>% 
+  select(Name,Preferred.Foot,Finishing,ShotPower)
+best
+
+ggplot(best,aes(x=ShotPower,y=Finishing,label=Name,col=Preferred.Foot))+geom_text()+
+  geom_jitter(alpha = 0.3, size = 2.5, width = 0.3, height = 0.3)+geom_smooth(method = "lm",col="gray40",lty = 2, se = FALSE, size = 0.6)+
+  theme_bw()+theme(legend.position = "bottom")+labs(x="Shot Power",y="Finishing",title = "Best Forward in Europe",caption = "@EA - FIFA 19")
+
+#Fastest Players in Europe
+fastest=data_league %>% 
+  filter(Class=="Forward") %>% 
+  select(Name,Preferred.Foot,SprintSpeed,Acceleration)
+fastest  
+
+ggplot(fastest,aes(x=SprintSpeed,y=Acceleration,label=Name,col=Preferred.Foot))+geom_text()+
+  geom_jitter(alpha = 0.3, size = 2.5, width = 0.3, height = 0.3)+geom_smooth(method = "lm",col="gray40",lty = 2, se = FALSE, size = 0.6)+
+  theme_bw()+theme(legend.position = "bottom")+labs(x="Sprint Speed",y="Acceleration",title = "Fastest Player in Europe",caption = "@EA - FIFA 19")
+
+#best players in PSG
+
+data_league %>% 
+  filter(Club=="Paris Saint-Germain") %>% 
+  select(Name,Overall,Potential) %>% 
+  arrange(-Overall) %>% 
+  head(10) %>% 
+  gather(variable,Exp,-Name) %>% 
+  ggplot(.,aes(x=Name,y=Exp,fill=variable))+geom_bar(stat = "identity",position = "dodge")+
+  geom_text(aes(label=Exp),vjust= -0.5)+theme_bw()+theme(legend.position = "bottom")+
+  labs(x="PSG Players",y="Exp",title = "Paris Saint-Germain",caption = "@EA - FIFA 19")
+
+#best players in arsenal
+
+data_league %>%
+  filter(Club=="Arsenal") %>% 
+  select(Name,Overall,Potential) %>% 
+  arrange(-Overall) %>% 
+  head(10) %>% 
+  gather(variables,Exps,-Name) %>% 
+  ggplot(.,aes(x=Name,y=Exps,fill=variables))+geom_bar(stat = "identity",position = "dodge")+
+  geom_text(aes(label=Exps),vjust=-0.5,hjust=1)+theme_bw()+theme(legend.position = "bottom")+
+  labs(x="Arsenal Player Names",y="Exps",title = "Arsenal Player",caption = "@EA-FIFA 19")
+  
